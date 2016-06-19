@@ -233,8 +233,10 @@ delimiter //
 CREATE PROCEDURE insert_location (OUT out_id INT, IN in_user VARCHAR(255), IN in_device VARCHAR(255), IN in_lat DOUBLE, IN in_long DOUBLE, IN in_alt DOUBLE, IN in_time DATETIME)
 BEGIN
   DECLARE cache_id INT;
+  DECLARE minrange INT;
   START TRANSACTION;
-    SELECT lc.id INTO cache_id FROM locations_cache AS lc WHERE IFNULL(ROUND(GLength(LineStringFromWKB(LineString(lc.location, GeomFromText(CONCAT('POINT(', in_lat, ' ', in_long, ')')))))*110400), 100) < 100;
+    SET minrange = 100;
+    SELECT lc.id INTO cache_id FROM locations_cache AS lc WHERE IFNULL(ROUND(GLength(LineStringFromWKB(LineString(lc.location, GeomFromText(CONCAT('POINT(', in_lat, ' ', in_long, ')')))))*110400), minrange) < minrange;
     IF cache_id IS NULL THEN
       INSERT INTO locations_cache (location) VALUES (GeomFromText(CONCAT('POINT(', in_lat, ' ', in_long, ')')));
       SET cache_id = LAST_INSERT_ID();
