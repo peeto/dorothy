@@ -1,34 +1,3 @@
--- Dorothy DDL
-
-CREATE DATABASE IF NOT EXISTS Dorothy;
-USE Dorothy;
-
-CREATE TABLE IF NOT EXISTS `locations` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `user` varchar(255) DEFAULT NULL,
-  `device` varchar(255) DEFAULT NULL,
-  `location` point DEFAULT NULL,
-  `altitude` float DEFAULT NULL,
-  `time` datetime DEFAULT NULL,
-  `previd` int(11) DEFAULT NULL,
-  `prevdist` double NOT NULL DEFAULT 0,
-  `cacheid` int(11) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `id_UNIQUE` (`id`),
-  KEY `idx_user` (`user`),
-  KEY `idx_device` (`device`),
-  KEY `idx_time` (`time`),
-  KEY `idx_location` (`location`(25)),
-  KEY `idx_previd` (`previd`),
-  KEY `idx_cacheid` (`cacheid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
-CREATE TABLE IF NOT EXISTS `locations_cache` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `location` point DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `idx_location` (`location`(25))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- destroy_previd
 DROP PROCEDURE IF EXISTS destroy_previd;
@@ -194,7 +163,7 @@ BEGIN
                       AND ics.cacheid <> lc.id
                       AND IFNULL(ROUND(GLength(LineStringFromWKB(LineString(lc.location, ics.location)))*110400), minrange) < minrange
                     GROUP BY ics.cacheid
-                    ORDER BY COUNT(1) DESC
+                    ORDER BY ics.id DESC
                     LIMIT 1
                   )
             GROUP BY lc.location
