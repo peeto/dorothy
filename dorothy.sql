@@ -138,7 +138,7 @@ BEGIN
     -- remove completed work
     DELETE FROM idcache 
       WHERE cacheid IS NOT NULL;
-    -- create new cached locations, may create duplicates that will be dealt with next
+    -- create new cached locations
     OPEN cacheCursor;
     read_loop: LOOP
       FETCH cacheCursor INTO insert_id, insert_location, cache_id;
