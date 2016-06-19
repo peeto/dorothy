@@ -155,10 +155,6 @@ BEGIN
         END IF;
       END IF;
     END LOOP;   
-    INSERT INTO locations_cache
-      (location)
-      SELECT idcache.location 
-        FROM idcache;
     DROP TEMPORARY TABLE IF EXISTS idcache;
     SELECT COUNT(1) 
       INTO workleft 
