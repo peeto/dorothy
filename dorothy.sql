@@ -97,7 +97,6 @@ delimiter //
 CREATE PROCEDURE repair_cache (IN workload INT, OUT workleft INT)
 BEGIN
   DECLARE minrange INT;
-  DECLARE minpoints INT;
   DECLARE done INT DEFAULT FALSE;
   DECLARE insert_id INT; 
   DECLARE insert_location POINT; 
@@ -108,7 +107,6 @@ BEGIN
   DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
   START TRANSACTION;
     SET minrange = 100;
-    SET minpoints = 10;
     -- get locations that need and have a cache and also locations that need a new cache
     CREATE TEMPORARY TABLE IF NOT EXISTS 
       idcache AS (
@@ -117,12 +115,6 @@ BEGIN
           FROM locations AS l
           WHERE 
             l.cacheid IS NULL 
-          AND 
-            (
-              (SELECT id FROM locations_cache AS lc WHERE IFNULL(ROUND(GLength(LineStringFromWKB(LineString(l.location, lc.location)))*110400), minrange) < minrange ORDER BY id LIMIT 1) IS NOT NULL
-            OR
-              (SELECT COUNT(1) FROM locations AS ln WHERE IFNULL(ROUND(GLength(LineStringFromWKB(LineString(l.location, ln.location)))*110400), minrange) < minrange) >= minpoints
-            )
           GROUP BY l.id
           ORDER BY l.id DESC 
           LIMIT workload
@@ -154,7 +146,8 @@ BEGIN
           UPDATE locations SET cacheid = cache_id WHERE IFNULL(ROUND(GLength(LineStringFromWKB(LineString(insert_location, location)))*110400), minrange) < minrange;
         END IF;
       END IF;
-    END LOOP;   
+    END LOOP;
+    CLOSE cacheCursor;
     DROP TEMPORARY TABLE IF EXISTS idcache;
     SELECT COUNT(1) 
       INTO workleft 
@@ -170,10 +163,8 @@ delimiter //
 CREATE PROCEDURE optimise_cache (IN workload INT, OUT workleft INT)
 BEGIN
   DECLARE minrange INT;
-  DECLARE minpoints INT;
   START TRANSACTION;
     SET minrange = 100;
-    SET minpoints = 10;
     -- find any duplicates in the cache that have less duplicates than a nearby duplicate in the cache
     DROP TEMPORARY TABLE IF EXISTS idcache;
     CREATE TEMPORARY TABLE IF NOT EXISTS 
@@ -182,10 +173,6 @@ BEGIN
           SELECT lc.id, lc.location, lc.id AS cacheid
             FROM locations_cache AS lc
             WHERE 
-                  (SELECT COUNT(1) FROM locations AS ics WHERE ics.cacheid = lc.id)
-                < 
-                  minpoints
-              AND 
                   (SELECT COUNT(1) FROM locations AS ics WHERE ics.cacheid = lc.id) 
                 < 
                   (SELECT COUNT(1) AS total
