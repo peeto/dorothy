@@ -214,7 +214,7 @@ END//
 delimiter ;
 
 -- insert_location
-DROP PROCEDURE IF EXISTS insert_current_location;
+DROP PROCEDURE IF EXISTS insert_location;
 DROP PROCEDURE IF EXISTS insert_location;
 delimiter //
 CREATE PROCEDURE insert_location (OUT out_id INT, IN in_user VARCHAR(255), IN in_device VARCHAR(255), IN in_lat DOUBLE, IN in_long DOUBLE, IN in_alt DOUBLE, IN in_time DATETIME)
